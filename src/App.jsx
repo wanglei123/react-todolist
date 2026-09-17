@@ -63,8 +63,34 @@ export default function App() {
     )
   }
 
-  const handleEdit = (todo) => {
-    setEditor({ mode: 'edit', todo })
+  const handleEdit = async (todo) => {
+    if (todo?.id == null || todo.id === '') {
+      setError('缺少待办 id，无法编辑')
+      return
+    }
+    setEditor({ mode: 'edit', loading: true, todo: { id: todo.id } })
+    try {
+      const detail = await api.getDetailById(todo.id)
+      if (!detail || detail.id == null) {
+        setEditor((prev) =>
+          prev && String(prev.todo?.id) === String(todo.id) ? null : prev,
+        )
+        setError('未找到待办详情')
+        return
+      }
+      setEditor((prev) => {
+        if (!prev || prev.mode !== 'edit' || String(prev.todo?.id) !== String(todo.id)) {
+          return prev
+        }
+        return { mode: 'edit', todo: detail }
+      })
+      setError('')
+    } catch (err) {
+      setEditor((prev) =>
+        prev && String(prev.todo?.id) === String(todo.id) ? null : prev,
+      )
+      setError(err.message || '获取详情失败')
+    }
   }
 
   const closeEditor = () => {
@@ -173,6 +199,7 @@ export default function App() {
         open={Boolean(editor)}
         mode={editor?.mode}
         todo={editor?.todo}
+        loading={Boolean(editor?.loading)}
         saving={savingTodo}
         onCancel={closeEditor}
         onSave={saveTodo}

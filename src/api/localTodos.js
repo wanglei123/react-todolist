@@ -42,4 +42,7 @@ export const localTodoApi = {
     writeStore(readStore().filter((item) => String(item.id) !== String(id)))
     return null
   },
+  async getDetailById(id) {
+    return readStore().find((item) => String(item.id) === String(id)) || null
+  },
 }
