@@ -193,7 +193,7 @@ export default function App() {
         {error && <p className="error">{error}</p>}
         <TodoForm onAdd={handleAdd} disabled={loading} />
         {loading ? (
-          <p className="empty">加载中...</p>
+          <p className="todo-empty">加载中...</p>
         ) : (
           <TodoList
             todos={visibleTodos}

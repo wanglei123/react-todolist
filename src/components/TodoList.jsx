@@ -2,7 +2,7 @@ import TodoItem from './TodoItem.jsx'
 
 export default function TodoList({ todos, onToggle, onEdit, onDelete }) {
   if (todos.length === 0) {
-    return <p className="empty">暂无待办，先添加一条吧</p>
+    return <p className="todo-empty">暂无待办，先添加一条吧</p>
   }
 
   return (
