@@ -1,4 +1,13 @@
 import { useEffect, useState } from 'react'
+import { DatePicker } from 'antd'
+import dayjs from 'dayjs'
+import { isCompleted, toCompletedFlag } from '../api/todos.js'
+
+function toDayjs(value) {
+  if (!value) return null
+  const date = dayjs(value)
+  return date.isValid() ? date : null
+}
 
 export default function TodoDialog({
   open,
@@ -11,6 +20,8 @@ export default function TodoDialog({
 }) {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [completed, setCompleted] = useState(0)
+  const [expectedCompleteDate, setExpectedCompleteDate] = useState(null)
   const isEdit = mode === 'edit'
   const disabled = saving || loading
 
@@ -19,16 +30,22 @@ export default function TodoDialog({
     if (isEdit && loading) {
       setTitle('')
       setContent('')
+      setCompleted(0)
+      setExpectedCompleteDate(null)
       return
     }
     if (isEdit && todo && !loading) {
       setTitle(todo.title || '')
       setContent(todo.content || '')
+      setCompleted(toCompletedFlag(todo.completed))
+      setExpectedCompleteDate(toDayjs(todo.expectedCompleteDate))
       return
     }
     if (!isEdit) {
       setTitle('')
       setContent('')
+      setCompleted(0)
+      setExpectedCompleteDate(null)
     }
   }, [open, isEdit, todo, loading])
 
@@ -39,7 +56,14 @@ export default function TodoDialog({
     const nextTitle = title.trim()
     const nextContent = content.trim()
     if (!nextTitle || !nextContent || saving || loading) return
-    onSave({ title: nextTitle, content: nextContent })
+    onSave({
+      title: nextTitle,
+      content: nextContent,
+      completed,
+      expectedCompleteDate: expectedCompleteDate
+        ? expectedCompleteDate.format('YYYY-MM-DD')
+        : null,
+    })
   }
 
   return (
@@ -81,6 +105,26 @@ export default function TodoDialog({
               if (event.key === 'Escape') onCancel()
             }}
           />
+        </label>
+        <label className="dialog-field">
+          <span>预计完成日期</span>
+          <DatePicker
+            value={expectedCompleteDate}
+            onChange={setExpectedCompleteDate}
+            placeholder="请选择预计完成日期"
+            disabled={disabled}
+            allowClear
+            style={{ width: '100%' }}
+          />
+        </label>
+        <label className="dialog-check">
+          <input
+            type="checkbox"
+            checked={isCompleted(completed)}
+            disabled={disabled}
+            onChange={(event) => setCompleted(event.target.checked ? 1 : 0)}
+          />
+          <span>已完成</span>
         </label>
         <div className="dialog-actions">
           <button className="btn" type="button" onClick={onCancel} disabled={saving}>

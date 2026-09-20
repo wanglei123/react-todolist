@@ -130,8 +130,20 @@
   word-break: break-word;
 }
 
+.todo-date {
+  display: block;
+  margin-top: 4px;
+  color: #4f46e5;
+  font-size: 12px;
+}
+
+.todo-date.empty {
+  color: #9ca3af;
+}
+
 .todo-item.completed .todo-title,
-.todo-item.completed .todo-content {
+.todo-item.completed .todo-content,
+.todo-item.completed .todo-date {
   color: #9ca3af;
   text-decoration: line-through;
 }
@@ -210,11 +222,12 @@
 }
 
 .dialog {
-  width: min(420px, 100%);
+  width: min(460px, 100%);
   background: #fff;
   border-radius: 16px;
   padding: 20px 20px 16px;
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+  overflow: visible;
 }
 
 .dialog h3 {
@@ -262,6 +275,21 @@
 .dialog-input:focus {
   border-color: #4f46e5;
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+.dialog-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.dialog-check input {
+  width: 16px;
+  height: 16px;
 }
 
 .dialog-actions {

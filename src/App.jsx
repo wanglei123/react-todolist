@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { todoApi } from './api/todos.js'
+import { todoApi, isCompleted, toCompletedFlag } from './api/todos.js'
 import { localTodoApi } from './api/localTodos.js'
 import './App.css'
 import TodoForm from './components/TodoForm.jsx'
@@ -41,26 +41,33 @@ export default function App() {
   }, [loadTodos])
 
   const visibleTodos = useMemo(() => {
-    if (filter === 'active') return todos.filter((item) => !item.completed)
-    if (filter === 'completed') return todos.filter((item) => item.completed)
+    if (filter === 'active') return todos.filter((item) => !isCompleted(item.completed))
+    if (filter === 'completed') return todos.filter((item) => isCompleted(item.completed))
     return todos
   }, [todos, filter])
 
-  const remaining = todos.filter((item) => !item.completed).length
+  const remaining = todos.filter((item) => !isCompleted(item.completed)).length
   const completedCount = todos.length - remaining
 
   const handleAdd = () => {
     setEditor({ mode: 'add' })
   }
 
-  const handleToggle = (todo) => {
-    setTodos((prev) =>
-      prev.map((item) =>
-        String(item.id) === String(todo.id)
-          ? { ...item, completed: !item.completed }
-          : item,
-      ),
-    )
+  const handleToggle = async (todo) => {
+    const nextCompleted = isCompleted(todo.completed) ? 0 : 1
+    try {
+      await api.updateCompleted(todo.id, nextCompleted)
+      setTodos((prev) =>
+        prev.map((item) =>
+          String(item.id) === String(todo.id)
+            ? { ...item, completed: nextCompleted }
+            : item,
+        ),
+      )
+      setError('')
+    } catch (err) {
+      setError(err.message || '更新完成状态失败')
+    }
   }
 
   const handleEdit = async (todo) => {
@@ -97,21 +104,30 @@ export default function App() {
     if (!savingTodo) setEditor(null)
   }
 
-  const saveTodo = async ({ title, content }) => {
+  const saveTodo = async ({ title, content, completed, expectedCompleteDate }) => {
     if (!editor) return
     setSavingTodo(true)
     try {
+      const completedFlag = toCompletedFlag(completed)
+      const payload = {
+        title,
+        content,
+        completed: completedFlag,
+        expectedCompleteDate: expectedCompleteDate || null,
+      }
       if (editor.mode === 'add') {
-        await todoApi.create({ title, content })
+        await todoApi.create(payload)
         const data = await todoApi.list()
         setTodos(Array.isArray(data) ? data : [])
         setMode('api')
       } else {
         const todo = editor.todo
-        await api.update(todo.id, { title, content })
+        await api.update(todo.id, payload)
         setTodos((prev) =>
           prev.map((item) =>
-            String(item.id) === String(todo.id) ? { ...item, title, content } : item,
+            String(item.id) === String(todo.id)
+              ? { ...item, ...payload }
+              : item,
           ),
         )
       }
@@ -146,10 +162,10 @@ export default function App() {
   }
 
   const handleClearCompleted = async () => {
-    const done = todos.filter((item) => item.completed)
+    const done = todos.filter((item) => isCompleted(item.completed))
     try {
       await Promise.all(done.map((item) => api.remove(item.id)))
-      setTodos((prev) => prev.filter((item) => !item.completed))
+      setTodos((prev) => prev.filter((item) => !isCompleted(item.completed)))
     } catch (err) {
       setError(err.message || '清除失败')
     }
