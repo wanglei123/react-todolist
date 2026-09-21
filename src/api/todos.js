@@ -6,7 +6,7 @@
  * @FilePath     : /front/src/api/todos.js
  * @description  : 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
-import request from './request.js'
+import request, { asList, unwrap } from './request.js'
 
 const BASE = '/todo'
 
@@ -19,22 +19,24 @@ export function toCompletedFlag(completed) {
 }
 
 export function normalizeTodo(item) {
-  if (!item || typeof item !== 'object') return item
-  const id = item.id ?? item.todoId
+  if (item == null) return item
+  const value = unwrap(item)
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return value
+  const id = value.id ?? value.todoId
   return {
-    ...item,
+    ...value,
     id,
-    title: item.title ?? '',
-    content: item.content ?? '',
-    completed: toCompletedFlag(item.completed),
-    expectedCompleteDate: item.expectedCompleteDate || item.expectCompleteDate || '',
+    title: value.title ?? '',
+    content: value.content ?? '',
+    completed: toCompletedFlag(value.completed),
+    expectedCompleteDate: value.expectedCompleteDate || value.expectCompleteDate || '',
   }
 }
 
 export const todoApi = {
   list: async () => {
     const data = await request.post('/todo/list')
-    return Array.isArray(data) ? data.map(normalizeTodo) : data
+    return asList(data).map(normalizeTodo)
   },
   create: async ({ title, content, completed = 0, expectedCompleteDate }) => {
     const created = await request.post('/todo/add', {

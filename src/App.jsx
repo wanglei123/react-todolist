@@ -27,10 +27,12 @@ export default function App() {
       const data = await todoApi.list()
       setTodos(Array.isArray(data) ? data : [])
       setMode('api')
-    } catch {
+      setError('')
+    } catch (err) {
       const data = await localTodoApi.list()
       setTodos(Array.isArray(data) ? data : [])
       setMode('local')
+      setError(err.message || '加载失败')
     } finally {
       setLoading(false)
     }
