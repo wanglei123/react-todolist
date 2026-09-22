@@ -33,10 +33,19 @@ export function normalizeTodo(item) {
   }
 }
 
+let pendingList = null
+
 export const todoApi = {
-  list: async () => {
-    const data = await request.post('/todo/list')
-    return asList(data).map(normalizeTodo)
+  list: () => {
+    if (!pendingList) {
+      pendingList = request
+        .post('/todo/list')
+        .then((data) => asList(data).map(normalizeTodo))
+        .finally(() => {
+          pendingList = null
+        })
+    }
+    return pendingList
   },
   create: async ({ title, content, completed = 0, expectedCompleteDate }) => {
     const created = await request.post('/todo/add', {
